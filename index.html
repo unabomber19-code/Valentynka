@@ -67,6 +67,7 @@
             z-index: 1;
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.5);
+            overflow: visible;
         }
 
         .gif-container {
@@ -95,6 +96,14 @@
             margin-bottom: 2rem;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
             animation: pulse 2s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+            transition: opacity 0.5s ease;
+        }
+
+        h1.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         @keyframes pulse {
@@ -104,12 +113,16 @@
 
         .buttons {
             display: flex;
+            flex-direction: column;
             gap: 20px;
             justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 2rem;
-            min-height: 80px;
             align-items: center;
+            margin-top: 3rem;
+            min-height: 200px;
+            position: relative;
+            width: 100%;
+            padding: 0 20px;
+            z-index: 1;
         }
 
         button {
@@ -123,6 +136,8 @@
             font-family: 'Poppins', sans-serif;
             position: relative;
             overflow: hidden;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         button::before {
@@ -144,12 +159,40 @@
             background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
             color: white;
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-            transform-origin: center;
+            transform-origin: bottom center;
+            transition: transform 0.5s ease, font-size 0.3s ease;
+            z-index: 10;
         }
 
         .yes-btn:hover {
-            transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        /* Klasa dla mega powiększonego przycisku */
+        .yes-btn.mega-size {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1) !important;
+            width: 95vw;
+            height: 95vh;
+            border-radius: 30px;
+            font-size: 8rem !important;
+            z-index: 1000;
+            animation: shakeMega 0.8s ease-in-out;
+        }
+
+        @keyframes shakeMega {
+            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+            10% { transform: translate(-50%, -50%) rotate(-5deg); }
+            20% { transform: translate(-50%, -50%) rotate(5deg); }
+            30% { transform: translate(-50%, -50%) rotate(-5deg); }
+            40% { transform: translate(-50%, -50%) rotate(5deg); }
+            50% { transform: translate(-50%, -50%) rotate(-3deg); }
+            60% { transform: translate(-50%, -50%) rotate(3deg); }
+            70% { transform: translate(-50%, -50%) rotate(-2deg); }
+            80% { transform: translate(-50%, -50%) rotate(2deg); }
+            90% { transform: translate(-50%, -50%) rotate(-1deg); }
         }
 
         .no-btn {
@@ -157,6 +200,8 @@
             color: white;
             box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 3;
         }
 
         .no-btn:hover {
@@ -164,8 +209,8 @@
             box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
         }
 
-        .no-btn.moving {
-            position: relative;
+        .no-btn.hidden {
+            display: none;
         }
 
         .success-container {
@@ -210,6 +255,8 @@
             .success-text { font-size: 3rem; }
             .container { padding: 2rem; }
             .gif-container { width: 200px; height: 200px; }
+            .buttons { margin-top: 2rem; min-height: 150px; }
+            .yes-btn.mega-size { font-size: 4rem !important; }
         }
     </style>
 </head>
@@ -217,15 +264,22 @@
     <!-- Floating Hearts Background -->
     <div class="hearts-container" id="heartsContainer"></div>
 
+    <!-- Audio element z Twoją muzyką careless_whisper.mp3 -->
+    <audio id="successMusic" preload="auto">
+        <source src="careless_whisper.mp3" type="audio/mpeg">
+        <!-- Fallback dla starszych przeglądarek -->
+        Twoja przeglądarka nie obsługuje odtwarzania audio.
+    </audio>
+
     <!-- Main Question Container -->
     <div class="container main-container" id="mainContainer">
-        <div class="gif-container">
+        <div class="gif-container" id="gifContainer">
             <img src="https://media.tenor.com/gUiu1zyxfzYAAAAi/bear-kiss-bear-kisses.gif" alt="Cute Bear" id="mainGif">
         </div>
         
-        <h1>Bobo, czy zostaniesz moją walentynką?</h1>
+        <h1 id="mainTitle">Bobo, czy zostaniesz moją walentynką?</h1>
         
-        <div class="buttons">
+        <div class="buttons" id="buttonsContainer">
             <button class="yes-btn" id="yesBtn" onclick="handleYes()">Tak!</button>
             <button class="no-btn" id="noBtn" onclick="handleNo()">Nie...</button>
         </div>
@@ -264,27 +318,25 @@
 
         // No button phrases
         const phrases = [
-            "No",
-            "Are you sure?",
-            "Really sure?",
-            "Think again!",
-            "Last chance!",
-            "Surely not?",
-            "You might regret this!",
-            "Give it another thought!",
-            "Are you absolutely certain?",
-            "This could be a mistake!",
-            "Have a heart!",
-            "Don't be so cold!",
-            "Change of heart?",
-            "Wouldn't you reconsider?",
-            "Is that your final answer?",
-            "You're breaking my heart 💔",
-            "Please? 🥺",
-            "Pretty please? 🥺💕",
-            "I'll be so sad...",
-            "My heart is aching!",
-            "Just say yes! 💝"
+            "Jesteś pewna?",
+            "Na 100%?",
+            "Na 1000%?!",
+            "Na 1.000.000%?!!!",
+            "Ostatecznie?",
+            "Definitywnie?",
+            "Nieodwołalnie?",
+            "Przemyśl to jeszcze!",
+            "Możesz później żałować...",
+            "Nie łam mi serduszka!",
+            "Proszę zgódź się!",
+            "Nadal niechętna?",
+            "A może teraz?",
+            "Teraz też nie?",
+            "Teraz już musisz się zgodzić!",
+            "Proszę? 🥺",
+            "Bardzo proszę? 🥺💕",
+            "Załamię się...",
+            "Ostatnia szansa!"
         ];
 
         let noCount = 0;
@@ -292,18 +344,26 @@
         const noBtn = document.getElementById('noBtn');
         const mainContainer = document.getElementById('mainContainer');
         const successContainer = document.getElementById('successContainer');
+        const mainTitle = document.getElementById('mainTitle');
+        const gifContainer = document.getElementById('gifContainer');
+        const buttonsContainer = document.getElementById('buttonsContainer');
+        const successMusic = document.getElementById('successMusic');
 
         function handleNo() {
             noCount++;
             
+            // Sprawdź czy to 20 kliknięcie
+            if (noCount >= 20) {
+                activateMegaMode();
+                return;
+            }
+            
             // Change button text
-            noBtn.textContent = phrases[Math.min(noCount, phrases.length - 1)];
+            noBtn.textContent = phrases[Math.min(noCount - 1, phrases.length - 1)];
             
             // Grow yes button
-            const currentSize = parseInt(window.getComputedStyle(yesBtn).fontSize);
-            const newSize = currentSize + 10;
-            yesBtn.style.fontSize = newSize + 'px';
-            yesBtn.style.padding = (15 + noCount * 5) + 'px ' + (40 + noCount * 10) + 'px';
+            const scale = 1 + (noCount * 0.35);
+            yesBtn.style.transform = `scale(${scale})`;
             
             // Add shake animation to no button
             noBtn.style.animation = 'shake 0.5s';
@@ -312,16 +372,43 @@
             }, 500);
             
             // Move no button randomly after a few clicks
-            if (noCount > 3) {
-                const x = (Math.random() - 0.5) * 200;
+            if (noCount > 2) {
+                const x = (Math.random() - 0.5) * 100;
                 const y = (Math.random() - 0.5) * 100;
                 noBtn.style.transform = `translate(${x}px, ${y}px)`;
             }
         }
 
+        function activateMegaMode() {
+            // Ukryj przycisk "Nie"
+            noBtn.classList.add('hidden');
+            
+            // Ukryj tekst i obrazek
+            mainTitle.classList.add('hidden');
+            gifContainer.style.opacity = '0';
+            gifContainer.style.transition = 'opacity 0.5s ease';
+            
+            // Aktywuj tryb mega przycisku
+            yesBtn.classList.add('mega-size');
+            yesBtn.textContent = 'TAK! ❤️';
+            
+            // Dodaj efekt zatrzęsienia
+            setTimeout(() => {
+                yesBtn.style.animation = 'shakeMega 0.9s ease-in-out';
+            }, 100);
+        }
+
         function handleYes() {
+            // Jeśli przycisk jest w trybie mega, przywróć normalny wygląd przed przejściem
+            if (yesBtn.classList.contains('mega-size')) {
+                yesBtn.classList.remove('mega-size');
+            }
+            
             mainContainer.classList.add('hidden');
             successContainer.classList.add('active');
+            
+            // Odtwórz Twoją muzykę careless_whisper.mp3
+            playSuccessMusic();
             
             // Create explosion of hearts
             for (let i = 0; i < 50; i++) {
@@ -346,7 +433,7 @@
                     const animate = () => {
                         x += vx;
                         y += vy;
-                        vy += 0.5; // gravity
+                        vy += 0.5;
                         heart.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
                         heart.style.opacity = parseFloat(heart.style.opacity || 1) - 0.02;
                         
@@ -359,6 +446,52 @@
                     requestAnimationFrame(animate);
                 }, i * 30);
             }
+        }
+
+        function playSuccessMusic() {
+            // Ustaw głośność (opcjonalnie)
+            successMusic.volume = 0.8; // 80% głośności
+            
+            // Spróbuj odtworzyć muzykę
+            const playPromise = successMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Careless Whisper zostało odtworzone pomyślnie!');
+                }).catch(error => {
+                    console.log('Autoodtwarzanie zostało zablokowane przez przeglądarkę:', error);
+                    // W przypadku błędu (blokada autoodtwarzania), dodajemy przycisk do ręcznego odtworzenia
+                    showMusicButton();
+                });
+            }
+        }
+
+        function showMusicButton() {
+            const musicBtn = document.createElement('button');
+            musicBtn.textContent = '🎵 Włącz Careless Whisper!';
+            musicBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 15px 30px;
+                background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+                color: white;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                font-size: 1.1rem;
+                font-weight: 600;
+                z-index: 1001;
+                box-shadow: 0 6px 20px rgba(233, 30, 99, 0.5);
+                animation: pulse 1.5s ease-in-out infinite;
+            `;
+            musicBtn.onclick = () => {
+                successMusic.play();
+                musicBtn.remove();
+            };
+            document.body.appendChild(musicBtn);
         }
 
         // Add shake animation dynamically
